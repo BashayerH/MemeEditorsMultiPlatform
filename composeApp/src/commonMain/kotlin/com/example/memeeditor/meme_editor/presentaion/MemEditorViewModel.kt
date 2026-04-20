@@ -19,9 +19,9 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class MemeEditorViewModel(
-    private val memeExporter: MemeExporter,
-    private val storageStrategy: SaveToStorageStrategy,
-    private val shareSheet: PlatformShareSheet
+//    private val memeExporter: MemeExporter,
+//    private val storageStrategy: SaveToStorageStrategy,
+//    private val shareSheet: PlatformShareSheet
 ) : ViewModel() {
 
     private var hasLoadedInitialData = false

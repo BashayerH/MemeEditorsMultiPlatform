@@ -55,6 +55,7 @@ kotlin {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
@@ -68,6 +69,7 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)             // KMP-safe compose integration
             implementation(libs.koin.compose.viewmodel)
+
 
         }
         commonTest.dependencies {

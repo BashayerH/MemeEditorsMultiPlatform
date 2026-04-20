@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.memeeditor.core.presentaion.NavigationRoot
 import com.example.memeeditor.core.theme.MemeCreatorTheme
 import com.example.memeeditor.meme_gallery.presentaion.MemesScreen
 import org.jetbrains.compose.resources.painterResource
@@ -25,10 +26,6 @@ import memeeditor.composeapp.generated.resources.compose_multiplatform
 @Preview
 fun App() {
     MemeCreatorTheme {
-        MemesScreen(
-            onMemeSelected = {
-
-            }
-        )
+        NavigationRoot()
     }
 }
