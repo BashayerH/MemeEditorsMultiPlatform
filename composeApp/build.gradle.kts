@@ -62,6 +62,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.jetbrains.compose.navigation)
+            implementation(libs.material3.adaptive)
+            implementation(libs.material3.adaptive.layout)
 
 //            implementation(libs.koin.android)
 //            implementation(libs.kotlinx.coroutines.core)
