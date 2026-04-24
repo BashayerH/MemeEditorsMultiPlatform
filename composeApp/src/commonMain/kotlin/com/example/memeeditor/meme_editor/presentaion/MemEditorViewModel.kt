@@ -8,6 +8,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memeeditor.core.presentaion.MemesTemplate
+import com.example.memeeditor.meme_editor.domain.MemeExporter
+import com.example.memeeditor.meme_editor.domain.SaveToStorageStrategy
+import com.example.memeeditor.meme_editor.presentaion.util.PlatformShareSheet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.onStart
@@ -20,9 +23,9 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class MemeEditorViewModel(
-//    private val memeExporter: MemeExporter,
-//    private val storageStrategy: SaveToStorageStrategy,
-//    private val shareSheet: PlatformShareSheet
+    private val memeExporter: MemeExporter,
+    private val storageStrategy: SaveToStorageStrategy,
+    private val shareSheet: PlatformShareSheet
 ) : ViewModel() {
 
     private var hasLoadedInitialData = false
@@ -66,8 +69,8 @@ class MemeEditorViewModel(
                 scale = action.scale
             )
 
-            is MemeEditorAction.OnSaveMemeClick -> TODO()
-//                saveMeme(action.memeTemplate)
+            is MemeEditorAction.OnSaveMemeClick ->
+                saveMeme(action.memeTemplate)
             is MemeEditorAction.OnSelectMemeText ->
                 selectMemeText(action.id)
             MemeEditorAction.OnTapOutsideSelectedText ->
@@ -76,26 +79,27 @@ class MemeEditorViewModel(
     }
 
 
-//    private fun saveMeme(memeTemplate: MemesTemplate) {
-//        viewModelScope.launch {
-//            memeExporter
-//                .exportMeme(
-//                    backgroundImageBytes = getDrawableResourceBytes(
-//                        environment = getSystemResourceEnvironment(),
-//                        resource = memeTemplate.drawable
-//                    ),
-//                    memeTexts = state.value.memeTexts,
-//                    templateSize = state.value.templateSize,
-//                    saveToStorageStrategy = storageStrategy
-//                )
-//                .onSuccess {
-//                    shareSheet.shareFile(it)
-//                }
-//                .onFailure {
-//                    it.printStackTrace()
-//                }
-//        }
-//    }
+    private fun saveMeme(memeTemplate: MemesTemplate) {
+        viewModelScope.launch {
+            memeExporter
+                .exportMeme(
+                    backgroundImageBytes = getDrawableResourceBytes(
+                        environment = getSystemResourceEnvironment(),
+                        resource = memeTemplate.drawableResource
+                    ),
+                    memeTexts = state.value.memeTexts,
+                    templateSize = state.value.templateSize,
+                    saveToStorageStrategy = storageStrategy
+                )
+                .onSuccess {
+                    println(" saved memes ")
+                    shareSheet.shareFile(it)
+                }
+                .onFailure {
+                    it.printStackTrace()
+                }
+        }
+    }
 
     private fun dismissConfirmLeaveDialog() {
         _state.update { it.copy(

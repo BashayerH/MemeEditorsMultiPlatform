@@ -6,9 +6,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import memeeditor.composeapp.generated.resources.ElMessiri_VariableFont_wght
+import memeeditor.composeapp.generated.resources.elmessiri
 import memeeditor.composeapp.generated.resources.Res
-import memeeditor.composeapp.generated.resources.Tajawal_Medium
+import memeeditor.composeapp.generated.resources.tajawal
 import memeeditor.composeapp.generated.resources.impact
 import org.jetbrains.compose.resources.Font
 
@@ -22,13 +22,13 @@ object Fonts {
 
     val Tajwal @Composable get() =
         FontFamily(
-            Font(resource = Res.font.Tajawal_Medium,
+            Font(resource = Res.font.tajawal,
                 weight = FontWeight.Normal
                 )
         )
     val Elmessiri @Composable get() =
         FontFamily(
-            Font(resource = Res.font.ElMessiri_VariableFont_wght,
+            Font(resource = Res.font.elmessiri,
                 weight = FontWeight.Normal)
         )
  }
@@ -64,19 +64,19 @@ val Typography: Typography
             bodyMedium = TextStyle(
                 fontFamily = Fonts.Tajwal,
                 fontWeight = FontWeight.Normal,
-                fontSize = 16.sp,
+                fontSize = 24.sp,
                 lineHeight = 24.sp
             ),
             bodySmall = TextStyle(
                 fontFamily = Fonts.Tajwal,
                 fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                fontSize = 24.sp,
                 lineHeight = 20.sp
             ),
             labelLarge = TextStyle(
                 fontFamily = Fonts.Elmessiri,
                 fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                fontSize = 24.sp,
                 lineHeight = 20.sp
             ),
 
