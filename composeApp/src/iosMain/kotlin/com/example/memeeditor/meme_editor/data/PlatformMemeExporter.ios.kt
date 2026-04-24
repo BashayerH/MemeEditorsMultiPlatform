@@ -6,22 +6,36 @@ import androidx.compose.ui.unit.IntSize
 import com.example.memeeditor.meme_editor.domain.MemeExporter
 import com.example.memeeditor.meme_editor.domain.SaveToStorageStrategy
 import com.example.memeeditor.meme_editor.presentaion.MemeText
+import com.example.memeeditor.meme_editor.presentaion.util.FitCanvasMapping
 import com.example.memeeditor.meme_editor.presentaion.util.MemeRenderCalculator
 import com.example.memeeditor.meme_editor.presentaion.util.ScaledMemeText
+import com.example.memeeditor.meme_editor.presentaion.util.containsArabicScript
 import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import platform.UIKit.UIScreen
 import kotlinx.coroutines.withContext
+import memeeditor.composeapp.generated.resources.Res
+import platform.CoreFoundation.CFDataCreate
+import platform.CoreFoundation.kCFAllocatorDefault
+import platform.CoreGraphics.CGDataProviderCreateWithCFData
+import platform.CoreGraphics.CGFontCreateWithDataProvider
+import platform.CoreText.CTFontManagerRegisterGraphicsFont
 import platform.Foundation.NSData
 import platform.Foundation.writeToFile
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.useContents
-import kotlinx.coroutines.IO
 import platform.CoreGraphics.CGContextRef
 import platform.CoreGraphics.CGContextRestoreGState
 import platform.CoreGraphics.CGContextRotateCTM
@@ -45,17 +59,26 @@ import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.UIColor
 import platform.UIKit.UIFont
 import platform.UIKit.UIGraphicsBeginImageContextWithOptions
+import platform.UIKit.NSWritingDirectionNatural
 import platform.UIKit.UIGraphicsEndImageContext
 import platform.UIKit.UIGraphicsGetCurrentContext
 import platform.UIKit.UIGraphicsGetImageFromCurrentImageContext
 import platform.UIKit.boundingRectWithSize
 import platform.UIKit.drawWithRect
 import kotlin.math.PI
+import kotlin.math.max
+import platform.CoreFoundation.CFErrorRefVar
 
 actual class PlatformMemeExporter : MemeExporter {
 
+    private companion object {
+        private val fontRegistrationMutex = Mutex()
+        private var composeMemeFontsRegistered: Boolean = false
+    }
+
     private val memeRenderCalculator = MemeRenderCalculator(
-        density = UIScreen.mainScreen.scale.toFloat()
+        density = UIScreen.mainScreen.scale.toFloat(),
+        fontScale = 1f
     )
 
     actual override suspend fun exportMeme(
@@ -64,8 +87,9 @@ actual class PlatformMemeExporter : MemeExporter {
         templateSize: IntSize,
         saveToStorageStrategy: SaveToStorageStrategy,
         fileName: String
-    ): Result<String> = withContext(Dispatchers.IO) {
+    ): Result<String> = withContext(Dispatchers.Default) {
         try {
+            ensureComposeMemeFontsRegistered()
             val backgroundImage = createBackgroundImage(
                 imageBytes = backgroundImageBytes
             ) ?: return@withContext Result.failure(Exception("Failed to create background image"))
@@ -104,6 +128,35 @@ actual class PlatformMemeExporter : MemeExporter {
         }
     }
 
+    /** Loads `Res.font.tajawal` / `Res.font.impact` bytes and registers them with Core Text (same files as Fonts.kt). */
+    private suspend fun ensureComposeMemeFontsRegistered() {
+        if (composeMemeFontsRegistered) return
+        val tajBytes = Res.readBytes("font/tajawal.ttf")
+        val impBytes = Res.readBytes("font/impact.ttf")
+        fontRegistrationMutex.withLock {
+            if (composeMemeFontsRegistered) return@withLock
+            registerFontBytesForProcess(tajBytes)
+            registerFontBytesForProcess(impBytes)
+            composeMemeFontsRegistered = true
+        }
+    }
+
+    private fun registerFontBytesForProcess(bytes: ByteArray) {
+        bytes.usePinned { pinned ->
+            val cfData = CFDataCreate(
+                allocator = kCFAllocatorDefault,
+                bytes = pinned.addressOf(0).reinterpret<UByteVar>(),
+                length = bytes.size.toLong(),
+            ) ?: return@usePinned
+            val provider = CGDataProviderCreateWithCFData(cfData) ?: return@usePinned
+            val cgFont = CGFontCreateWithDataProvider(provider) ?: return@usePinned
+            memScoped {
+                val err = alloc<CFErrorRefVar>()
+                CTFontManagerRegisterGraphicsFont(cgFont, err.ptr)
+            }
+        }
+    }
+
     private fun createBackgroundImage(imageBytes: ByteArray): UIImage? {
         val imageData = imageBytes.usePinned { pinned ->
             NSData.Companion.create(
@@ -119,15 +172,18 @@ actual class PlatformMemeExporter : MemeExporter {
         memeTexts: List<MemeText>,
         templateSize: IntSize
     ): UIImage? {
-        val imageSize = IntSize(
-            width = backgroundImage.size.useContents { width.toInt() },
-            height = backgroundImage.size.useContents { height.toInt() }
-        )
+        val pointW = backgroundImage.size.useContents { width }
+        val pointH = backgroundImage.size.useContents { height }
+        val imageScale = max(backgroundImage.scale.toDouble(), 1.0)
+        val pixelW = max((pointW * imageScale).toInt(), 1)
+        val pixelH = max((pointH * imageScale).toInt(), 1)
+        val bitmapPixelSize = IntSize(width = pixelW, height = pixelH)
 
+        // scale=1 so one context unit = one bitmap pixel (matches Android Canvas + MemeRenderCalculator).
         UIGraphicsBeginImageContextWithOptions(
-            CGSizeMake(imageSize.width.toDouble(), imageSize.height.toDouble()),
+            CGSizeMake(pixelW.toDouble(), pixelH.toDouble()),
             false,
-            0.0
+            1.0
         )
 
         val context = UIGraphicsGetCurrentContext()
@@ -140,21 +196,20 @@ actual class PlatformMemeExporter : MemeExporter {
             CGRectMake(
                 x = 0.0,
                 y = 0.0,
-                width = imageSize.width.toDouble(),
-                height = imageSize.height.toDouble()
+                width = pixelW.toDouble(),
+                height = pixelH.toDouble()
             )
         )
 
-        val scaleFactors = memeRenderCalculator.calculateScaleFactors(
-            bitmapWidth = imageSize.width,
-            bitmapHeight = imageSize.height,
-            templateSize = templateSize
+        val mapping = FitCanvasMapping.fromTemplateAndBitmap(
+            templateSize = templateSize,
+            bitmapSize = bitmapPixelSize,
         )
         val scaledMemeTexts = memeTexts.map { memeText ->
             memeRenderCalculator.calculateScaledMemeText(
                 memeText = memeText,
-                scaleFactors = scaleFactors,
-                templateSize = templateSize
+                mapping = mapping,
+                templateSize = templateSize,
             )
         }
 
@@ -172,18 +227,37 @@ actual class PlatformMemeExporter : MemeExporter {
     }
 
     private fun drawText(context: CGContextRef, memeText: ScaledMemeText) {
-        val textNS = NSString.create(memeText.text)
-        val attributes = createMemeTextAttributes(
-            fontSize = memeText.scaledFontSizePx,
-            strokeWidth = memeText.strokeWidth
-        )
+        val text = memeText.text
+        val textNS = NSString.create(text)
+        val font = memeUIFontForExport(text, memeText.scaledFontSizePx.toDouble())
+        val paragraphStyle = memeParagraphStyle(text)
+        val fontSizePx = max(memeText.scaledFontSizePx.toDouble(), 1.0)
+        val strokePercent = memeText.strokeWidth.toDouble() / fontSizePx * 100.0
 
-        val boundingRect = textNS?.boundingRectWithSize(
+        // Match Android: stroke pass then fill pass. Single attributed draw with negative stroke
+        // can drop Arabic (RTL) fill on UIKit; two passes keep white fill visible.
+        @Suppress("UNCHECKED_CAST")
+        val outlineAttrs = mapOf(
+            NSFontAttributeName to font,
+            NSForegroundColorAttributeName to UIColor.blackColor,
+            NSStrokeColorAttributeName to UIColor.blackColor,
+            NSStrokeWidthAttributeName to NSNumber(strokePercent),
+            NSParagraphStyleAttributeName to paragraphStyle,
+        ) as Map<Any?, Any?>
+        @Suppress("UNCHECKED_CAST")
+        val fillAttrs = mapOf(
+            NSFontAttributeName to font,
+            NSForegroundColorAttributeName to UIColor.whiteColor,
+            NSStrokeWidthAttributeName to NSNumber(0.0),
+            NSParagraphStyleAttributeName to paragraphStyle,
+        ) as Map<Any?, Any?>
+
+        val boundingRect = textNS.boundingRectWithSize(
             size = CGSizeMake(memeText.constraintWidth.toDouble(), CGFloat.MAX_VALUE),
             options = 1L shl 0,
-            attributes = attributes,
-            context = null
-        ) ?: return
+            attributes = outlineAttrs,
+            context = null,
+        )
 
         val textHeight = boundingRect.useContents { size.height.toFloat() }
         val textWidth = boundingRect.useContents { size.width.toFloat() }
@@ -206,34 +280,46 @@ actual class PlatformMemeExporter : MemeExporter {
             (-boxHeight / 2f + memeText.textPaddingY).toDouble(),
         )
 
-        textNS.drawWithRect(
-            rect = CGRectMake(0.0, 0.0, memeText.constraintWidth.toDouble(), textHeight.toDouble()),
-            options = 1L shl 0,
-            attributes = attributes,
-            context = null
-        )
+        val drawRect = CGRectMake(0.0, 0.0, memeText.constraintWidth.toDouble(), textHeight.toDouble())
+        val drawOptions = 1L shl 0
+        textNS.drawWithRect(drawRect, options = drawOptions, attributes = outlineAttrs, context = null)
+        textNS.drawWithRect(drawRect, options = drawOptions, attributes = fillAttrs, context = null)
 
         CGContextRestoreGState(context)
     }
 
-    private fun createMemeTextAttributes(
-        fontSize: Float,
-        strokeWidth: Float
-    ): Map<Any?, Any?> {
-        val font = UIFont.fontWithName("Impact", fontSize.toDouble())
-            ?: UIFont.boldSystemFontOfSize(fontSize.toDouble())
-
-        val paragraphStyle = NSMutableParagraphStyle().apply {
+    private fun memeParagraphStyle(text: String): NSMutableParagraphStyle {
+        return NSMutableParagraphStyle().apply {
             setAlignment(NSTextAlignmentCenter)
             setLineBreakMode(NSLineBreakByWordWrapping)
+            if (text.containsArabicScript()) {
+                setBaseWritingDirection(NSWritingDirectionNatural)
+            }
         }
-
-        return mapOf(
-            NSFontAttributeName to font,
-            NSForegroundColorAttributeName to UIColor.whiteColor,
-            NSStrokeColorAttributeName to UIColor.blackColor,
-            NSStrokeWidthAttributeName to NSNumber(-strokeWidth),
-            NSParagraphStyleAttributeName to paragraphStyle
-        )
     }
+
+    /** Bundled tajawal.ttf is PostScript "Tajawal-Medium"; apply bold trait to align with editor ExtraBold. */
+    private fun memeUIFontForExport(text: String, pointSize: Double): UIFont {
+        if (!text.containsArabicScript()) {
+            UIFont.fontWithName("Impact", pointSize)?.let { return it }
+            return UIFont.boldSystemFontOfSize(pointSize)
+        }
+        val base = sequenceOf(
+            "Tajawal-Medium",
+            "Tajawal-Bold",
+            "Tajawal-Regular",
+            "Tajawal",
+        ).firstNotNullOfOrNull { name -> UIFont.fontWithName(name, pointSize) }
+            ?: return UIFont.boldSystemFontOfSize(pointSize)
+        return tajwalWithBoldTrait(base) ?: base
+    }
+
+    private fun tajwalWithBoldTrait(font: UIFont): UIFont? {
+        val desc = font.fontDescriptor
+        // UIFontDescriptorTraitBold == 1u shl 1
+        val combined = desc.symbolicTraits or 2u
+        val withTraits = desc.fontDescriptorWithSymbolicTraits(combined) ?: return null
+        return UIFont.fontWithDescriptor(withTraits, font.pointSize)
+    }
+
 }

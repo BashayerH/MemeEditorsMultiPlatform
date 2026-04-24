@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.memeeditor.core.theme.MemeCreatorTheme
@@ -23,11 +24,13 @@ fun OutlinedImpactText(
     ) {
         Text(
             text = text,
-            style = strokeTextStyle
+            style = strokeTextStyle.copy(textAlign = TextAlign.Center),
+            textAlign = TextAlign.Center
         )
         Text(
             text = text,
-            style = fillTextStyle
+            style = fillTextStyle.copy(textAlign = TextAlign.Center),
+            textAlign = TextAlign.Center
         )
     }
 }

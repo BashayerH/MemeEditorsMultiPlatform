@@ -63,7 +63,7 @@ val Typography: Typography
             ),
             bodyMedium = TextStyle(
                 fontFamily = Fonts.Tajwal,
-                fontWeight = FontWeight.Normal,
+                fontWeight = FontWeight.ExtraBold,
                 fontSize = 24.sp,
                 lineHeight = 24.sp
             ),

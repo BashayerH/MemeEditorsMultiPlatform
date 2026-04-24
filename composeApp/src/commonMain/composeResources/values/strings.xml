@@ -3,7 +3,10 @@
     <string name="meme_templates">Meme Templates</string>
     <string name="meme_empty_list">Tap + button to create your first meme</string>
     <string name="add_text">Add text</string>
-    <string name="save_meme">Save meme</string>
+    <string name="save_meme">share meme</string>
+    <string name="save_to_gallery">Save to gallery</string>
+    <string name="gallery_saved">Saved to gallery</string>
+    <string name="gallery_save_failed">Could not save to gallery</string>
     <string name="save_to_device">Save to device</string>
     <string name="save_to_device_desc">Save created meme in the Files of your device</string>
     <string name="share_meme">Share the meme</string>

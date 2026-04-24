@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.memeeditor.core.presentaion.MemesTemplate
 import com.example.memeeditor.meme_editor.domain.MemeExporter
 import com.example.memeeditor.meme_editor.domain.SaveToStorageStrategy
+import com.example.memeeditor.meme_editor.platform.isGallerySaveSupported
+import com.example.memeeditor.meme_editor.platform.saveJpegFileToGallery
 import com.example.memeeditor.meme_editor.presentaion.util.PlatformShareSheet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +19,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getDrawableResourceBytes
 import org.jetbrains.compose.resources.getSystemResourceEnvironment
 import kotlin.uuid.ExperimentalUuidApi
@@ -71,15 +75,47 @@ class MemeEditorViewModel(
 
             is MemeEditorAction.OnSaveMemeClick ->
                 saveMeme(action.memeTemplate)
+            is MemeEditorAction.OnSaveToGalleryClick ->
+                saveMemeToGallery(action.memeTemplate)
             is MemeEditorAction.OnSelectMemeText ->
                 selectMemeText(action.id)
             MemeEditorAction.OnTapOutsideSelectedText ->
                 unselectMemeText()
+            MemeEditorAction.OnUiMessageConsumed ->
+                consumeUiMessage()
         }
+    }
+
+    private fun consumeUiMessage() {
+        _state.update { it.copy(uiMessage = null) }
     }
 
 
     private fun saveMeme(memeTemplate: MemesTemplate) {
+        viewModelScope.launch {
+            val result = memeExporter.exportMeme(
+                backgroundImageBytes = getDrawableResourceBytes(
+                    environment = getSystemResourceEnvironment(),
+                    resource = memeTemplate.drawableResource
+                ),
+                memeTexts = state.value.memeTexts,
+                templateSize = state.value.templateSize,
+                saveToStorageStrategy = storageStrategy
+            )
+            result.fold(
+                onSuccess = { path ->
+                    println(" saved memes ")
+                    withContext(Dispatchers.Main) {
+                        shareSheet.shareFile(path)
+                    }
+                },
+                onFailure = { it.printStackTrace() },
+            )
+        }
+    }
+
+    private fun saveMemeToGallery(memeTemplate: MemesTemplate) {
+        if (!isGallerySaveSupported()) return
         viewModelScope.launch {
             memeExporter
                 .exportMeme(
@@ -91,12 +127,28 @@ class MemeEditorViewModel(
                     templateSize = state.value.templateSize,
                     saveToStorageStrategy = storageStrategy
                 )
-                .onSuccess {
-                    println(" saved memes ")
-                    shareSheet.shareFile(it)
+                .onSuccess { path ->
+                    saveJpegFileToGallery(
+                        filePath = path,
+                        displayName = path.substringAfterLast('/').substringAfterLast('\\')
+                    )
+                        .onSuccess {
+                            _state.update { s ->
+                                s.copy(uiMessage = MemeEditorUiMessage.GallerySaved)
+                            }
+                        }
+                        .onFailure {
+                            it.printStackTrace()
+                            _state.update { s ->
+                                s.copy(uiMessage = MemeEditorUiMessage.GalleryFailed)
+                            }
+                        }
                 }
                 .onFailure {
                     it.printStackTrace()
+                    _state.update { s ->
+                        s.copy(uiMessage = MemeEditorUiMessage.GalleryFailed)
+                    }
                 }
         }
     }

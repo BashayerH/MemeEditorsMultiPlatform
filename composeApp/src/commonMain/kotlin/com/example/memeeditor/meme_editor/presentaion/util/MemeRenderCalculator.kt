@@ -1,61 +1,44 @@
 package com.example.memeeditor.meme_editor.presentaion.util
 
 
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntSize
 import com.example.memeeditor.meme_editor.presentaion.MemeText
 import kotlin.math.roundToInt
 
 class MemeRenderCalculator(
-    private val density: Float
+    private val density: Float,
+    /** User font scale (accessibility); must match Compose `LocalDensity.fontScale` on Android. */
+    private val fontScale: Float = 1f,
 ) {
     companion object {
         private const val TEXT_PADDING_DP = 8f
         private const val STROKE_WIDTH_DP = 3f
     }
 
-    fun calculateScaleFactors(
-        bitmapWidth: Int,
-        bitmapHeight: Int,
-        templateSize: IntSize
-    ): ScaleFactors {
-        val scaleX = if(templateSize.width > 0) bitmapWidth.toFloat() / templateSize.width else 1f
-        val scaleY = if(templateSize.height > 0) bitmapHeight.toFloat() / templateSize.height else 1f
-
-        val bitmapScale = (scaleX + scaleY) / 2
-
-        return ScaleFactors(
-            scaleX = scaleX,
-            scaleY = scaleY,
-            bitmapScale = bitmapScale
-        )
-    }
-
     fun calculateScaledMemeText(
         memeText: MemeText,
-        scaleFactors: ScaleFactors,
-        templateSize: IntSize
+        mapping: FitCanvasMapping,
+        templateSize: IntSize,
     ): ScaledMemeText {
-        val (scaleX, scaleY, bitmapScale) = scaleFactors
+        val tx = memeText.offsetRatioX * templateSize.width
+        val ty = memeText.offsetRatioY * templateSize.height
+        val scaledOffset = mapping.templateTopLeftToBitmapTopLeft(tx, ty)
 
-        val scaledOffset = Offset(
-            x = (memeText.offsetRatioX * templateSize.width) * scaleX,
-            y = (memeText.offsetRatioY * templateSize.height) * scaleY
-        )
+        val textPaddingTemplatePx = TEXT_PADDING_DP * density
+        val textPaddingBitmap = mapping.templateDistanceToBitmap(textPaddingTemplatePx)
 
-        val textPaddingPx = TEXT_PADDING_DP * density
-        val textPaddingBitmapX = textPaddingPx * scaleX
-        val textPaddingBitmapY = textPaddingPx * scaleY
+        val fontSizeTemplatePx = memeText.fontSize * density * fontScale
+        val scaledFontSize = mapping.templateDistanceToBitmap(fontSizeTemplatePx)
 
-        val scaledFontSize = memeText.fontSize * bitmapScale
+        val strokeWidthTemplatePx = STROKE_WIDTH_DP * density
+        val strokeWidth = mapping.templateDistanceToBitmap(strokeWidthTemplatePx)
 
-        val strokeWidth = STROKE_WIDTH_DP * density * scaleX
-
-        val paddingDp = TEXT_PADDING_DP * 2
-        val paddingPx = paddingDp * density
-        val constraintWidth = ((templateSize.width / memeText.scale) * scaleX - paddingPx * scaleX)
-            .roundToInt()
-            .coerceAtLeast(1)
+        val paddingPx = TEXT_PADDING_DP * 2 * density
+        val maxLineTemplatePx =
+            (templateSize.width.toFloat() / memeText.scale) - paddingPx * 2
+        val constraintWidth = mapping.templateDistanceToBitmap(
+            maxLineTemplatePx.coerceAtLeast(1f)
+        ).roundToInt().coerceAtLeast(1)
 
         return ScaledMemeText(
             text = memeText.text,
@@ -63,17 +46,11 @@ class MemeRenderCalculator(
             scaledFontSizePx = scaledFontSize,
             strokeWidth = strokeWidth,
             constraintWidth = constraintWidth,
-            textPaddingX = textPaddingBitmapX,
-            textPaddingY = textPaddingBitmapY,
+            textPaddingX = textPaddingBitmap,
+            textPaddingY = textPaddingBitmap,
             rotation = memeText.rotation,
             scale = memeText.scale,
             originalText = memeText
         )
     }
 }
-
-data class ScaleFactors(
-    val scaleX: Float,
-    val scaleY: Float,
-    val bitmapScale: Float
-)

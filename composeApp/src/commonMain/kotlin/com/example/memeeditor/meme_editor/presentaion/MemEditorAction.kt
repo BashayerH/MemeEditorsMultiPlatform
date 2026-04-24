@@ -12,6 +12,7 @@ sealed interface MemeEditorAction {
      data object OnDismissLeaveWithoutSaving: MemeEditorAction
 
      data class OnSaveMemeClick(val memeTemplate: MemesTemplate): MemeEditorAction
+    data class OnSaveToGalleryClick(val memeTemplate: MemesTemplate): MemeEditorAction
     data object OnTapOutsideSelectedText: MemeEditorAction
 
     data object OnAddTextClick: MemeEditorAction
@@ -29,4 +30,5 @@ sealed interface MemeEditorAction {
 
     data class OnContainerSizeChange(val size: IntSize): MemeEditorAction
 
+    data object OnUiMessageConsumed : MemeEditorAction
  }

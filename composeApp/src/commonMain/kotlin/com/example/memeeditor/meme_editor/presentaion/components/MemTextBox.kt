@@ -6,10 +6,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,10 +29,15 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.memeeditor.core.theme.Fonts
 import com.example.memeeditor.meme_editor.presentaion.MemeText
 import com.example.memeeditor.meme_editor.presentaion.TextBoxInteractionState
+import com.example.memeeditor.meme_editor.presentaion.util.containsArabicScript
 import com.example.memeeditor.meme_editor.presentaion.util.rememberFillTextStyle
 import com.example.memeeditor.meme_editor.presentaion.util.rememberStrokeTextStyle
 import kotlinx.coroutines.delay
@@ -71,7 +79,10 @@ fun MemeTextBox(
                         textBoxInteractionState.textBoxId == memeText.id)
         Box(
             modifier = Modifier
-                .sizeIn(maxWidth = maxWidth, maxHeight = maxHeight)
+                .wrapContentWidth()
+                .wrapContentHeight()
+                .widthIn(max = maxWidth)
+                .heightIn(max = maxHeight)
                 .border(
                     width = 2.dp,
                     color = if(isMemeTextSelected) {
@@ -91,8 +102,21 @@ fun MemeTextBox(
                     onDoubleClick = onDoubleClick
                 )
         ) {
-            val strokeTextStyle = rememberStrokeTextStyle()
-            val fillTextStyle = rememberFillTextStyle()
+            val fontSizeSp = memeText.fontSize.sp
+            val hasArabic = remember(memeText.text) { memeText.text.containsArabicScript() }
+            val arabicLineHeight = if (hasArabic) fontSizeSp else TextUnit.Unspecified
+            val strokeTextStyle = rememberStrokeTextStyle(
+                fontSize = fontSizeSp,
+                lineHeight = arabicLineHeight,
+                fontWeight = if (hasArabic) FontWeight.ExtraBold else null,
+                fontFamily = if (hasArabic) Fonts.Tajwal else Fonts.Impact,
+            )
+            val fillTextStyle = rememberFillTextStyle(
+                fontSize = fontSizeSp,
+                lineHeight = arabicLineHeight,
+                fontWeight = if (hasArabic) FontWeight.ExtraBold else null,
+                fontFamily = if (hasArabic) Fonts.Tajwal else Fonts.Impact,
+            )
             val textPadding = 8.dp
             if(textBoxInteractionState is TextBoxInteractionState.Editing &&
                 textBoxInteractionState.textBoxId == memeText.id) {
@@ -112,25 +136,19 @@ fun MemeTextBox(
                     text = memeText.text,
                     strokeTextStyle = strokeTextStyle,
                     fillTextStyle = fillTextStyle,
-                    modifier = Modifier
-                        .padding(textPadding)
+                    modifier = Modifier.padding(textPadding)
                 )
             }
         }
-        if(isMemeTextSelected) {
+        if (isMemeTextSelected) {
             Box(
                 modifier = Modifier
                     .size(24.dp)
                     .align(Alignment.TopEnd)
-                    .offset(
-                        x = 12.dp,
-                        y = -(12).dp
-                    )
+                    .offset(x = 12.dp, y = (-12).dp)
                     .clip(CircleShape)
                     .background(Color(0xFFB3261E))
-                    .clickable {
-                        onDeleteClick()
-                    },
+                    .clickable { onDeleteClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

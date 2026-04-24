@@ -4,7 +4,8 @@ data class MemeText (
 
     val id : String,
     val text : String,
-    val fontSize : Float = 20f,
+    /** Display size in **sp**, must match the editor text style (see [rememberFillTextStyle]). */
+    val fontSize : Float = 36f,
     val offsetRatioX : Float = 0f,
     val offsetRatioY : Float =0f,
     val rotation : Float = 0f,

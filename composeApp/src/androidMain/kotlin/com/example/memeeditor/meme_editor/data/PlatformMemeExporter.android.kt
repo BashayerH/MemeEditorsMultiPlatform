@@ -18,8 +18,10 @@ import com.example.memeeditor.R
 import com.example.memeeditor.meme_editor.domain.MemeExporter
 import com.example.memeeditor.meme_editor.domain.SaveToStorageStrategy
 import com.example.memeeditor.meme_editor.presentaion.MemeText
+import com.example.memeeditor.meme_editor.presentaion.util.FitCanvasMapping
 import com.example.memeeditor.meme_editor.presentaion.util.MemeRenderCalculator
 import com.example.memeeditor.meme_editor.presentaion.util.ScaledMemeText
+import com.example.memeeditor.meme_editor.presentaion.util.containsArabicScript
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -31,7 +33,8 @@ actual class PlatformMemeExporter(
 ) : MemeExporter {
 
     private val memeRenderCalculator = MemeRenderCalculator(
-        density = context.resources.displayMetrics.density
+        density = context.resources.displayMetrics.density,
+        fontScale = context.resources.configuration.fontScale
     )
 
     actual override suspend fun exportMeme(
@@ -86,17 +89,16 @@ actual class PlatformMemeExporter(
         )
         val canvas = Canvas(output)
 
-        val scaleFactors = memeRenderCalculator.calculateScaleFactors(
-            bitmapWidth = background.width,
-            bitmapHeight = background.height,
-            templateSize = templateSize
+        val mapping = FitCanvasMapping.fromTemplateAndBitmap(
+            templateSize = templateSize,
+            bitmapSize = IntSize(background.width, background.height),
         )
 
         val scaledMemeTexts = memeTexts.map {
             memeRenderCalculator.calculateScaledMemeText(
                 memeText = it,
-                scaleFactors = scaleFactors,
-                templateSize = templateSize
+                mapping = mapping,
+                templateSize = templateSize,
             )
         }
 
@@ -108,22 +110,19 @@ actual class PlatformMemeExporter(
     }
 
     private fun drawText(canvas: Canvas, memeText: ScaledMemeText) {
-        val impactTypeface = ResourcesCompat.getFont(
-            context,
-            R.font.impact
-        ) ?: Typeface.DEFAULT_BOLD
+        val memeTypeface = memeTypefaceFor(memeText.text)
 
         val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = memeText.strokeWidth
             textSize = memeText.scaledFontSizePx
-            typeface = impactTypeface
+            typeface = memeTypeface
             color = Color.BLACK
         }
         val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
             textSize = memeText.scaledFontSizePx
-            typeface = impactTypeface
+            typeface = memeTypeface
             color = Color.WHITE
         }
 
@@ -172,6 +171,19 @@ actual class PlatformMemeExporter(
 
             strokeLayout.draw(this)
             fillLayout.draw(this)
+        }
+    }
+
+    private fun memeTypefaceFor(text: String): Typeface {
+        val raw = if (text.containsArabicScript()) {
+            ResourcesCompat.getFont(context, R.font.tajawal)
+        } else {
+            ResourcesCompat.getFont(context, R.font.impact)
+        } ?: Typeface.DEFAULT_BOLD
+        return if (text.containsArabicScript()) {
+            Typeface.create(raw, Typeface.BOLD)
+        } else {
+            raw
         }
     }
 }
