@@ -1,4 +1,36 @@
 This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM).
+# Meme Editor App
+##  Overview
+
+This app allows users to:
+- Browse a collection of meme images
+- Add custom text on images
+- Create and share memes
+
+  ## 📌 Status
+
+✅ Completed (MVP)  
+🚧 Open for improvements 
+
+## ⭐ Notes
+
+This project is part of a journey to:
+- Finish what I start
+- Explore new technologies
+- Build consistently
+
+---
+
+Feel free to explore, fork, or give feedback!
+
+
+
+<img width="798" height="750" alt="Screenshot 2026-04-25 at 2 39 27 PM" src="https://github.com/user-attachments/assets/43f04bef-8290-47b1-8b08-a4f90fb3a7e3" />
+
+<img width="839" height="780" alt="Screenshot 2026-04-25 at 4 09 32 PM" src="https://github.com/user-attachments/assets/e70f267b-7215-4d34-a975-3e4daf812848" />
+
+
+
 
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
   It contains several subfolders:
