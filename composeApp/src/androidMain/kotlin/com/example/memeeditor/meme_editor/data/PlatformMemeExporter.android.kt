@@ -123,7 +123,7 @@ actual class PlatformMemeExporter(
             style = Paint.Style.FILL
             textSize = memeText.scaledFontSizePx
             typeface = memeTypeface
-            color = Color.WHITE
+            color = (memeText.originalText.colorArgb and 0xFFFFFFFFL).toInt()
         }
 
         val strokeLayout = StaticLayout.Builder.obtain(

@@ -10,4 +10,6 @@ data class MemeText (
     val offsetRatioY : Float =0f,
     val rotation : Float = 0f,
     val scale : Float = 1f,
+    /** Packed ARGB fill color. Survives drag/resize; used by preview and export. */
+    val colorArgb: Long = MemeTextColors.DefaultFill,
 )

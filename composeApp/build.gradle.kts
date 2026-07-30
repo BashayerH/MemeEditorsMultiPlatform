@@ -46,6 +46,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.splashscreen)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)             // KMP-safe compose integration
             implementation(libs.koin.compose.viewmodel)

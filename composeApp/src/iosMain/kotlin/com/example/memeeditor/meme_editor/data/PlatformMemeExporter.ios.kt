@@ -247,7 +247,7 @@ actual class PlatformMemeExporter : MemeExporter {
         @Suppress("UNCHECKED_CAST")
         val fillAttrs = mapOf(
             NSFontAttributeName to font,
-            NSForegroundColorAttributeName to UIColor.whiteColor,
+            NSForegroundColorAttributeName to uiColorFromArgb(memeText.originalText.colorArgb),
             NSStrokeWidthAttributeName to NSNumber(0.0),
             NSParagraphStyleAttributeName to paragraphStyle,
         ) as Map<Any?, Any?>
@@ -286,6 +286,14 @@ actual class PlatformMemeExporter : MemeExporter {
         textNS.drawWithRect(drawRect, options = drawOptions, attributes = fillAttrs, context = null)
 
         CGContextRestoreGState(context)
+    }
+
+    private fun uiColorFromArgb(colorArgb: Long): UIColor {
+        val a = ((colorArgb ushr 24) and 0xFF) / 255.0
+        val r = ((colorArgb ushr 16) and 0xFF) / 255.0
+        val g = ((colorArgb ushr 8) and 0xFF) / 255.0
+        val b = (colorArgb and 0xFF) / 255.0
+        return UIColor.colorWithRed(red = r, green = g, blue = b, alpha = a)
     }
 
     private fun memeParagraphStyle(text: String): NSMutableParagraphStyle {

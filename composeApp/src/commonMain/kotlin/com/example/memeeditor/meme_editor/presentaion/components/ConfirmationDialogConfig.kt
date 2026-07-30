@@ -8,6 +8,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.example.memeeditor.core.theme.Fonts
 
 data class ConfirmationDialogConfig(
     val title: String,
@@ -49,7 +52,12 @@ fun ConfirmationDialog(
         text = {
             Text(
                 text = config.message,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontFamily = Fonts.Tajwal,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp,
+                ),
                 color = MaterialTheme.colorScheme.onSurface
             )
         },

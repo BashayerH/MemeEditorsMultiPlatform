@@ -1,6 +1,5 @@
 package com.example.memeeditor.meme_editor.presentaion.components
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,9 +36,13 @@ import androidx.compose.ui.unit.sp
 import com.example.memeeditor.core.theme.Fonts
 import com.example.memeeditor.meme_editor.presentaion.MemeText
 import com.example.memeeditor.meme_editor.presentaion.TextBoxInteractionState
+import com.example.memeeditor.meme_editor.presentaion.toComposeColor
 import com.example.memeeditor.meme_editor.presentaion.util.containsArabicScript
 import com.example.memeeditor.meme_editor.presentaion.util.rememberFillTextStyle
 import com.example.memeeditor.meme_editor.presentaion.util.rememberStrokeTextStyle
+import memeeditor.composeapp.generated.resources.Res
+import memeeditor.composeapp.generated.resources.delete_text
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.delay
 
 @Composable
@@ -52,14 +55,14 @@ fun MemeTextBox(
     onDoubleClick: () -> Unit,
     onTextChange: (String) -> Unit,
     onDeleteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val memeTextFocusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(textBoxInteractionState) {
-        if(textBoxInteractionState is TextBoxInteractionState.Editing) {
+        if (textBoxInteractionState is TextBoxInteractionState.Editing) {
             memeTextFocusRequester.requestFocus()
             delay(100)
             keyboardController?.show()
@@ -67,16 +70,16 @@ fun MemeTextBox(
     }
 
     LaunchedEffect(textBoxInteractionState, memeText.id) {
-        if(textBoxInteractionState !is TextBoxInteractionState.Selected) {
+        if (textBoxInteractionState !is TextBoxInteractionState.Selected) {
             focusManager.clearFocus()
         }
     }
 
     Box(modifier) {
         val isMemeTextSelected = (textBoxInteractionState is TextBoxInteractionState.Selected &&
-                textBoxInteractionState.textBoxId == memeText.id) ||
-                (textBoxInteractionState is TextBoxInteractionState.Editing &&
-                        textBoxInteractionState.textBoxId == memeText.id)
+            textBoxInteractionState.textBoxId == memeText.id) ||
+            (textBoxInteractionState is TextBoxInteractionState.Editing &&
+                textBoxInteractionState.textBoxId == memeText.id)
         Box(
             modifier = Modifier
                 .wrapContentWidth()
@@ -85,22 +88,24 @@ fun MemeTextBox(
                 .heightIn(max = maxHeight)
                 .border(
                     width = 2.dp,
-                    color = if(isMemeTextSelected) {
-                        Color.White
-                    } else Color.Transparent,
-                    shape = RoundedCornerShape(4.dp)
+                    color = if (isMemeTextSelected) Color.White else Color.Transparent,
+                    shape = RoundedCornerShape(4.dp),
                 )
                 .background(
-                    color = if(textBoxInteractionState is TextBoxInteractionState.Editing &&
-                        textBoxInteractionState.textBoxId == memeText.id) {
+                    color = if (textBoxInteractionState is TextBoxInteractionState.Editing &&
+                        textBoxInteractionState.textBoxId == memeText.id
+                    ) {
                         Color.Black.copy(alpha = 0.15f)
-                    } else Color.Transparent,
-                    shape = RoundedCornerShape(4.dp)
+                    } else {
+                        Color.Transparent
+                    },
+                    shape = RoundedCornerShape(4.dp),
                 )
                 .combinedClickable(
                     onClick = onClick,
-                    onDoubleClick = onDoubleClick
-                )
+                    onDoubleClick = onDoubleClick,
+                    onLongClick = onDoubleClick,
+                ),
         ) {
             val fontSizeSp = memeText.fontSize.sp
             val hasArabic = remember(memeText.text) { memeText.text.containsArabicScript() }
@@ -116,10 +121,12 @@ fun MemeTextBox(
                 lineHeight = arabicLineHeight,
                 fontWeight = if (hasArabic) FontWeight.ExtraBold else null,
                 fontFamily = if (hasArabic) Fonts.Tajwal else Fonts.Impact,
+                fillColor = memeText.colorArgb.toComposeColor(),
             )
             val textPadding = 8.dp
-            if(textBoxInteractionState is TextBoxInteractionState.Editing &&
-                textBoxInteractionState.textBoxId == memeText.id) {
+            if (textBoxInteractionState is TextBoxInteractionState.Editing &&
+                textBoxInteractionState.textBoxId == memeText.id
+            ) {
                 OutlinedFontTextField(
                     text = memeText.text,
                     onTextChange = onTextChange,
@@ -129,33 +136,33 @@ fun MemeTextBox(
                     maxHeight = maxHeight - (textPadding * 2),
                     modifier = Modifier
                         .focusRequester(memeTextFocusRequester)
-                        .padding(textPadding)
+                        .padding(textPadding),
                 )
             } else {
                 OutlinedImpactText(
                     text = memeText.text,
                     strokeTextStyle = strokeTextStyle,
                     fillTextStyle = fillTextStyle,
-                    modifier = Modifier.padding(textPadding)
+                    modifier = Modifier.padding(textPadding),
                 )
             }
         }
         if (isMemeTextSelected) {
             Box(
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(28.dp)
                     .align(Alignment.TopEnd)
                     .offset(x = 12.dp, y = (-12).dp)
                     .clip(CircleShape)
                     .background(Color(0xFFB3261E))
                     .clickable { onDeleteClick() },
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = null,
+                    contentDescription = stringResource(Res.string.delete_text),
                     tint = Color.White,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
