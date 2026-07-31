@@ -16,8 +16,13 @@
 2. Set `TEAM_ID=XXXXXXXXXX` from [Apple Developer → Membership](https://developer.apple.com/account)
 3. `Config.local.xcconfig` is gitignored
 
-## Host privacy URL
+## Host privacy URL (GitHub Pages)
 
-Publish `docs/privacy-policy.html` (GitHub Pages, Notion public page, or your domain), then set the public HTTPS URL in:
+1. Repo → **Settings** → **Pages**
+2. Build and deployment → Source: **Deploy from a branch**
+3. Branch: **main**, folder: **/docs** → Save
+4. Wait ~1 minute, then open:  
+   https://bashayerh.github.io/MemeEditorsMultiPlatform/
 
-`composeApp/.../core/StoreConfig.kt` → `PRIVACY_POLICY_URL`
+That URL is already set in `StoreConfig.PRIVACY_POLICY_URL`.  
+`docs/index.html` is the privacy policy (GitHub Pages always looks for `index.html`; without it you only see the repo README).

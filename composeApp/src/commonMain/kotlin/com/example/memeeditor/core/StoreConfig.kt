@@ -11,6 +11,10 @@ object StoreConfig {
     const val VERSION_NAME = "1.0.0"
     const val VERSION_CODE = 1
 
-    /** Host docs/privacy-policy.md (or privacy-policy.html) and put the public URL here. */
-    const val PRIVACY_POLICY_URL = "https://memeeditor.app/privacy"
+    /**
+     * GitHub Pages URL (repo: BashayerH/MemeEditorsMultiPlatform, source: /docs).
+     * Site home is docs/index.html = privacy policy.
+     */
+    const val PRIVACY_POLICY_URL =
+        "https://bashayerh.github.io/MemeEditorsMultiPlatform/"
 }
