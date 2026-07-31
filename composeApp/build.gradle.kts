@@ -2,6 +2,7 @@ import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -48,7 +49,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.splashscreen)
             implementation(libs.koin.core)
-            implementation(libs.koin.compose)             // KMP-safe compose integration
+            implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
 
         }
@@ -66,11 +67,9 @@ kotlin {
             implementation(libs.material3.adaptive)
             implementation(libs.material3.adaptive.layout)
 
-//            implementation(libs.koin.android)
-//            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.koin.core)
-            implementation(libs.koin.compose)             // KMP-safe compose integration
+            implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
 
 
@@ -86,24 +85,46 @@ kotlin {
 }
 
 android {
+    // R/BuildConfig package matches existing Kotlin sources; store id is applicationId only.
     namespace = "com.example.memeeditor"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.memeeditor"
+        applicationId = "com.memeeditor.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    val keystoreProperties = Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+    }
+
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
@@ -122,7 +143,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.example.memeeditor"
+            packageName = "com.memeeditor.app"
             packageVersion = "1.0.0"
         }
     }

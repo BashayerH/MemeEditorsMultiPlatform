@@ -128,15 +128,15 @@ actual class PlatformMemeExporter : MemeExporter {
         }
     }
 
-    /** Loads `Res.font.tajawal` / `Res.font.impact` bytes and registers them with Core Text (same files as Fonts.kt). */
+    /** Loads `Res.font.tajawal` / `Res.font.anton` bytes and registers them with Core Text (same files as Fonts.kt). */
     private suspend fun ensureComposeMemeFontsRegistered() {
         if (composeMemeFontsRegistered) return
         val tajBytes = Res.readBytes("font/tajawal.ttf")
-        val impBytes = Res.readBytes("font/impact.ttf")
+        val antonBytes = Res.readBytes("font/anton.ttf")
         fontRegistrationMutex.withLock {
             if (composeMemeFontsRegistered) return@withLock
             registerFontBytesForProcess(tajBytes)
-            registerFontBytesForProcess(impBytes)
+            registerFontBytesForProcess(antonBytes)
             composeMemeFontsRegistered = true
         }
     }
@@ -309,7 +309,8 @@ actual class PlatformMemeExporter : MemeExporter {
     /** Bundled tajawal.ttf is PostScript "Tajawal-Medium"; apply bold trait to align with editor ExtraBold. */
     private fun memeUIFontForExport(text: String, pointSize: Double): UIFont {
         if (!text.containsArabicScript()) {
-            UIFont.fontWithName("Impact", pointSize)?.let { return it }
+            UIFont.fontWithName("Anton-Regular", pointSize)?.let { return it }
+            UIFont.fontWithName("Anton", pointSize)?.let { return it }
             return UIFont.boldSystemFontOfSize(pointSize)
         }
         val base = sequenceOf(

@@ -19,6 +19,11 @@ This project is part of a journey to:
 - Explore new technologies
 - Build consistently
 
+## Store release
+
+App id: `com.memeeditor.app` (v1.0.0). Latin meme font is **Anton** (OFL).  
+Follow **[docs/RELEASE.md](docs/RELEASE.md)** for Play Console + App Store Connect steps.
+
 ---
 
 Feel free to explore, fork, or give feedback!

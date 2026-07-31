@@ -114,13 +114,13 @@ fun MemeTextBox(
                 fontSize = fontSizeSp,
                 lineHeight = arabicLineHeight,
                 fontWeight = if (hasArabic) FontWeight.ExtraBold else null,
-                fontFamily = if (hasArabic) Fonts.Tajwal else Fonts.Impact,
+                fontFamily = if (hasArabic) Fonts.Tajwal else Fonts.Anton,
             )
             val fillTextStyle = rememberFillTextStyle(
                 fontSize = fontSizeSp,
                 lineHeight = arabicLineHeight,
                 fontWeight = if (hasArabic) FontWeight.ExtraBold else null,
-                fontFamily = if (hasArabic) Fonts.Tajwal else Fonts.Impact,
+                fontFamily = if (hasArabic) Fonts.Tajwal else Fonts.Anton,
                 fillColor = memeText.colorArgb.toComposeColor(),
             )
             val textPadding = 8.dp

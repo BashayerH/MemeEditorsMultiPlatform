@@ -18,7 +18,7 @@ fun rememberFillTextStyle(
     fontSize: TextUnit = 36.sp,
     lineHeight: TextUnit = TextUnit.Unspecified,
     fontWeight: FontWeight? = null,
-    fontFamily: FontFamily = Fonts.Impact,
+    fontFamily: FontFamily = Fonts.Anton,
     fillColor: Color = Color.White,
     textAlign: TextAlign = TextAlign.Center
 ): TextStyle {

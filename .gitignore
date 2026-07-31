@@ -5,6 +5,11 @@
 xcuserdata
 !src/**/build/
 local.properties
+keystore.properties
+*.jks
+*.keystore
+signing/
+iosApp/Configuration/Config.local.xcconfig
 .idea
 .DS_Store
 captures

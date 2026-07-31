@@ -21,7 +21,7 @@ fun rememberStrokeTextStyle(
     fontSize: TextUnit = 36.sp,
     lineHeight: TextUnit = TextUnit.Unspecified,
     fontWeight: FontWeight? = null,
-    fontFamily: FontFamily = Fonts.Impact,
+    fontFamily: FontFamily = Fonts.Anton,
     strokeColor: Color = Color.Black,
     strokeWidth: Dp = 3.dp,
     textAlign: TextAlign = TextAlign.Center

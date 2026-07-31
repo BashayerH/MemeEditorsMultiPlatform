@@ -1,0 +1,3 @@
+// Copy to Config.local.xcconfig and fill your Team ID.
+// Config.local.xcconfig is gitignored and #include'd from Config.xcconfig.
+TEAM_ID=

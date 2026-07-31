@@ -178,7 +178,7 @@ actual class PlatformMemeExporter(
         val raw = if (text.containsArabicScript()) {
             ResourcesCompat.getFont(context, R.font.tajawal)
         } else {
-            ResourcesCompat.getFont(context, R.font.impact)
+            ResourcesCompat.getFont(context, R.font.anton)
         } ?: Typeface.DEFAULT_BOLD
         return if (text.containsArabicScript()) {
             Typeface.create(raw, Typeface.BOLD)

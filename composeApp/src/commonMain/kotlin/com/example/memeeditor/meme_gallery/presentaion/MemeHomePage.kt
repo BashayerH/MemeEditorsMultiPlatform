@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -36,8 +38,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.example.memeeditor.core.StoreConfig
 import com.example.memeeditor.core.presentaion.MemesTemplate
 import com.example.memeeditor.core.presentaion.memesListTemplates
 import com.example.memeeditor.meme_editor.platform.rememberGalleryImagePicker
@@ -46,6 +50,7 @@ import memeeditor.composeapp.generated.resources.Res
 import memeeditor.composeapp.generated.resources.meme_template_cd
 import memeeditor.composeapp.generated.resources.meme_templates
 import memeeditor.composeapp.generated.resources.pick_from_gallery
+import memeeditor.composeapp.generated.resources.privacy_policy
 import memeeditor.composeapp.generated.resources.processing_image
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -59,7 +64,9 @@ fun MemesScreen(
     val displayTemplates = remember { memesListTemplates }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
     val pickFromGalleryLabel = stringResource(Res.string.pick_from_gallery)
+    val privacyLabel = stringResource(Res.string.privacy_policy)
     val templateCd = stringResource(Res.string.meme_template_cd)
     val processingLabel = stringResource(Res.string.processing_image)
     var isProcessingPick by remember { mutableStateOf(false) }
@@ -83,7 +90,24 @@ fun MemesScreen(
             TopAppBar(
                 title = {
                     Text(text = stringResource(Res.string.meme_templates))
-                }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            runCatching { uriHandler.openUri(StoreConfig.PRIVACY_POLICY_URL) }
+                                .onFailure {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(privacyLabel)
+                                    }
+                                }
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = privacyLabel,
+                        )
+                    }
+                },
             )
         },
         floatingActionButton = {
