@@ -26,9 +26,10 @@ meme,editor,template,caption,photo,funny,share,gallery,text
 
 ## URLs
 
-- Support URL: your support page or email mailto landing  
-- Privacy Policy URL: hosted `docs/privacy-policy.html`  
+- Support URL: `https://bashayerh.github.io/MemeEditorsMultiPlatform/support.html`  
+- Privacy Policy URL: `https://bashayerh.github.io/MemeEditorsMultiPlatform/`  
 - Marketing URL: optional  
+- Routing App Coverage File (.geojson): **leave empty** (only for navigation/routing apps)  
 
 ## App Privacy (nutrition labels)
 
